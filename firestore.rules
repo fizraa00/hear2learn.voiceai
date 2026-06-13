@@ -1,0 +1,143 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Default Deny Rule - Global Safety Net
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // --- PRIMITIVE GLOBAL REUSABLE FUNCTIONS ---
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    // --- VALIDATION BLUEPRINTS ---
+
+    // 1. User Entity Validation Blueprint
+    function isValidUser(data) {
+      return data.keys().hasAll(['uid', 'totalStudyTime', 'language', 'createdAt', 'updatedAt'])
+        && data.keys().size() == 5
+        && data.uid == request.auth.uid
+        && data.totalStudyTime is number
+        && data.totalStudyTime >= 0
+        && data.language is string
+        && data.language.size() <= 10
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    match /users/{userId} {
+      allow get: if isOwner(userId) && isValidId(userId);
+      
+      allow create: if isOwner(userId)
+        && isValidId(userId)
+        && isValidUser(incoming())
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time;
+        
+      allow update: if isOwner(userId)
+        && isValidId(userId)
+        && isValidUser(incoming())
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time;
+    }
+
+    // 2. Progress Entity Validation Blueprint
+    function isValidProgress(data) {
+      return data.keys().hasAll(['userId', 'chapterId', 'chapterTitle', 'status', 'masteredConcepts', 'weakTopics', 'updatedAt'])
+        && data.keys().size() == 7
+        && data.userId == request.auth.uid
+        && data.chapterId is string
+        && data.chapterId.size() <= 128
+        && data.chapterTitle is string
+        && data.chapterTitle.size() <= 200
+        && data.status in ['in-progress', 'completed']
+        && data.masteredConcepts is list
+        && data.masteredConcepts.size() <= 20
+        && data.weakTopics is list
+        && data.weakTopics.size() <= 20
+        && data.updatedAt is timestamp;
+    }
+
+    match /users/{userId}/progress/{progressId} {
+      allow read: if isOwner(userId) && isValidId(userId) && isValidId(progressId);
+      
+      allow create: if isOwner(userId)
+        && isValidId(userId)
+        && isValidId(progressId)
+        && isValidProgress(incoming())
+        && incoming().updatedAt == request.time;
+        
+      allow update: if isOwner(userId)
+        && isValidId(userId)
+        && isValidId(progressId)
+        && isValidProgress(incoming())
+        && incoming().updatedAt == request.time;
+    }
+
+    // 3. Quiz Record Entity Validation Blueprint
+    function isValidQuiz(data) {
+      return data.keys().hasAll(['userId', 'chapterTitle', 'score', 'totalQuestions', 'weakAreasDetected', 'createdAt'])
+        && data.keys().size() == 6
+        && data.userId == request.auth.uid
+        && data.chapterTitle is string
+        && data.chapterTitle.size() <= 200
+        && data.score is number
+        && data.score >= 0
+        && data.totalQuestions is number
+        && data.totalQuestions > 0
+        && data.weakAreasDetected is list
+        && data.weakAreasDetected.size() <= 50
+        && data.createdAt is timestamp;
+    }
+
+    match /users/{userId}/quizzes/{quizId} {
+      allow read: if isOwner(userId) && isValidId(userId) && isValidId(quizId);
+      
+      allow create: if isOwner(userId)
+        && isValidId(userId)
+        && isValidId(quizId)
+        && isValidQuiz(incoming())
+        && incoming().createdAt == request.time;
+    }
+
+    // 4. Study Material Entity Validation Blueprint
+    function isValidStudyMaterial(data) {
+      return data.keys().hasAll(['userId', 'title', 'content', 'createdAt'])
+        && data.keys().size() == 4
+        && data.userId == request.auth.uid
+        && data.title is string
+        && data.title.size() <= 200
+        && data.content is string
+        && data.content.size() <= 1000000 // Upper bound size limit
+        && data.createdAt is timestamp;
+    }
+
+    match /users/{userId}/materials/{materialId} {
+      allow read: if isOwner(userId) && isValidId(userId) && isValidId(materialId);
+      
+      allow create: if isOwner(userId)
+        && isValidId(userId)
+        && isValidId(materialId)
+        && isValidStudyMaterial(incoming())
+        && incoming().createdAt == request.time;
+    }
+  }
+}

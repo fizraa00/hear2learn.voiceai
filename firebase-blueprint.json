@@ -1,0 +1,76 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "Information about the student profile and learning preferences.",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "description": "The unique Firebase Auth identifier of the student." },
+        "totalStudyTime": { "type": "number", "description": "Accumulated study duration in minutes." },
+        "language": { "type": "string", "description": "Selected language command preference (en, hi, te, ta, ur)." },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Creation timestamp." },
+        "updatedAt": { "type": "string", "format": "date-time", "description": "Update timestamp." }
+      },
+      "required": ["uid", "totalStudyTime", "language", "createdAt", "updatedAt"]
+    },
+    "Progress": {
+      "title": "Progress",
+      "description": "Tracks completed chapters and dynamic mastery metrics for topics.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string", "description": "Reference ID of the user." },
+        "chapterId": { "type": "string", "description": "Safe identifier of the chapter." },
+        "chapterTitle": { "type": "string", "description": "Human-readable chapter title." },
+        "status": { "type": "string", "enum": ["in-progress", "completed"] },
+        "masteredConcepts": { "type": "array", "description": "List of core concepts deemed learned." },
+        "weakTopics": { "type": "array", "description": "List of concepts needing revision." },
+        "updatedAt": { "type": "string", "format": "date-time", "description": "Last updated timestamp." }
+      },
+      "required": ["userId", "chapterId", "chapterTitle", "status", "masteredConcepts", "weakTopics", "updatedAt"]
+    },
+    "QuizRecord": {
+      "title": "QuizRecord",
+      "description": "Result of an active voice-based or interface quiz evaluation.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string", "description": "Reference ID of the student." },
+        "chapterTitle": { "type": "string", "description": "Title of the chapter associated with the quiz." },
+        "score": { "type": "number", "description": "Count of correct responses." },
+        "totalQuestions": { "type": "number", "description": "Total number of graded items." },
+        "weakAreasDetected": { "type": "array", "description": "List of weak areas diagnosed." },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Grading timestamp." }
+      },
+      "required": ["userId", "chapterTitle", "score", "totalQuestions", "weakAreasDetected", "createdAt"]
+    },
+    "StudyMaterial": {
+      "title": "StudyMaterial",
+      "description": "Extracted text or documents uploaded by the user.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string", "description": "Reference ID of the owner." },
+        "title": { "type": "string", "description": "Name of the file." },
+        "content": { "type": "string", "description": "Full text payload for semantic search & reading." },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Upload timestamp." }
+      },
+      "required": ["userId", "title", "content", "createdAt"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "User",
+      "description": "User profile collection."
+    },
+    "/users/{userId}/progress/{progressId}": {
+      "schema": "Progress",
+      "description": "Subject progress collection."
+    },
+    "/users/{userId}/quizzes/{quizId}": {
+      "schema": "QuizRecord",
+      "description": "Historical records of completed quizzes and performance scores."
+    },
+    "/users/{userId}/materials/{materialId}": {
+      "schema": "StudyMaterial",
+      "description": "Uploaded PDF pages and parsed study materials."
+    }
+  }
+}
