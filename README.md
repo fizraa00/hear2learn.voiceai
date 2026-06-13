@@ -1,3 +1,28 @@
+# Hear2Learn VoiceAI
+
+## AI-Powered Voice Learning Assistant for Visually Impaired Students
+
+VoiceLearn AI is a conversational learning platform designed to help visually impaired students learn independently through voice interaction.
+
+### Features
+
+- AI Tutor
+- Smart Study Reader
+- Voice Navigation
+- Voice Quiz Mode
+- Progress Tracking
+- Multilingual Support
+
+### Problem Statement
+
+Most accessibility tools can read text aloud but cannot teach concepts, answer follow-up questions, or track learning progress.
+
+### Solution
+
+VoiceLearn AI transforms study materials into interactive learning experiences using Gemini AI.
+
+---
+
 <div align="center">
 <img width="1200" height="475" alt="GHBanner" src="https://ai.google.dev/static/site-assets/images/share-ais-513315318.png" />
 </div>
